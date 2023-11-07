@@ -1,0 +1,21 @@
+{
+  "name": "assignment-02",
+  "version": "1.0.0",
+  "description": "This is assigment 2 - Express.js",
+  "main": "app.js",
+  "scripts": {
+    "start": "nodemon app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "backend",
+    "node.js",
+    "express.js"
+  ],
+  "author": "Khang Nguyen",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "nodemon": "^3.0.1"
+  }
+}
