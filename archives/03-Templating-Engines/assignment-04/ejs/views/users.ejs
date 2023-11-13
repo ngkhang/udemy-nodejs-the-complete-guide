@@ -1,0 +1,19 @@
+<%- include('includes/head.ejs') %>
+  
+  <h1>Users Page</h1>
+  <div>
+    <% if (users.length > 0) { %>
+      <h2>List Users</h2>
+      <div>
+        <ul>
+          <% for (let item of users) { %>
+            <li><%= item.userName %></li>
+          <% } %>
+        </ul>
+      </div>
+    <% } else { %>
+        <h2>No User Pound!</h2>
+    <% } %>
+  </div>
+
+<%- include('includes/end.ejs')%>

@@ -1,0 +1,15 @@
+extends ./layouts/mainLayout.pug
+
+block contents
+  h1 Users Page
+  div
+    if hasUsers
+      h2 List Users
+      div
+        ul
+          each item in users
+            li= item.userName
+    else
+      h2 No User Pound!
+
+

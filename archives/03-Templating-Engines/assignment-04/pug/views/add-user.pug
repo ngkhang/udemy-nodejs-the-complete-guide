@@ -1,0 +1,8 @@
+extends ./layouts/mainLayout.pug
+
+block contents
+  h1 Add new user
+  form(action="/add-user" method="post")
+    label(for="userName") Username
+    input(type="text" name="userName")
+    button(type="submit") Submit

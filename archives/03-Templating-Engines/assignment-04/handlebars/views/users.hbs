@@ -1,0 +1,12 @@
+<div>
+  {{#if hasUsers}}
+    <h2>List Users</h2>
+    <ul>
+      {{#each users}}
+        <li>{{this.userName}}</li>
+      {{/each}}
+    </ul>
+  {{else}}
+    <h2>No User Pound!</h2>
+  {{/if}}
+</div>
