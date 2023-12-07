@@ -1,5 +1,5 @@
 const Product = require('../models/product');
-const Cart = require('../models/cart');
+const Order = require('../models/order');
 
 exports.getProducts = (req, res, next) => {
   Product.findAll()
@@ -51,52 +51,96 @@ exports.getIndex = (req, res, next) => {
 };
 
 exports.getCart = (req, res, next) => {
-  Cart.getCart(cart => {
-    Product.fetchAll(products => {
-      const cartProducts = [];
-      for (product of products) {
-        const cartProductData = cart.products.find(
-          prod => prod.id === product.id
-        );
-        if (cartProductData) {
-          cartProducts.push({ productData: product, qty: cartProductData.qty });
-        }
-      }
-      res.render('shop/cart', {
-        path: '/cart',
-        pageTitle: 'Your Cart',
-        products: cartProducts
-      });
-    });
-  });
+  req.user
+    .getCart()
+    .then((cart) => {
+      return cart.getProducts()
+        .then((products) => {
+          res.render('shop/cart', {
+            path: '/cart',
+            pageTitle: 'Your Cart',
+            products,
+          });
+        })
+        .catch(err => console.log(err));
+    })
+    .catch(err => console.log(err));
 };
 
 exports.postCart = (req, res, next) => {
   const prodId = req.body.productId;
-  Product.findById(prodId, product => {
-    Cart.addProduct(prodId, product.price);
-  });
-  res.redirect('/cart');
+  let userCart;
+  let newQuantity = 1;
+  req.user
+    .getCart()
+    .then((cart) => {
+      userCart = cart;
+      return cart.getProducts({ where: { id: prodId } })
+    })
+    .then((products) => {
+      let product = (products.length > 0) ? products[0] : undefined;
+
+      if (product) {
+        newQuantity = product.cartItem.quantity + 1;
+        return product;
+      };
+
+      return Product.findByPk(prodId)
+    })
+    .then((product) => {
+      return userCart.addProduct(product, { through: { quantity: newQuantity } }); // Method add by Sequenlize
+    })
+    .then(() => res.redirect('/cart'))
+    .catch(err => console.log(err));
 };
 
 exports.postCartDeleteProduct = (req, res, next) => {
   const prodId = req.body.productId;
-  Product.findById(prodId, product => {
-    Cart.deleteProduct(prodId, product.price);
-    res.redirect('/cart');
-  });
+  req.user
+    .getCart()
+    .then((cart) => cart.getProducts({ where: { id: prodId } }))
+    .then((product) => product[0].cartItem.destroy())
+    .then(() => res.redirect('/cart'))
+    .catch(err => console.log(err));
 };
+
+exports.postOrder = (req, res, next) => {
+  let userCart;
+  req.user
+    .getCart()
+    .then((cart) => {
+      userCart = cart;
+      return cart.getProducts();
+    })
+    .then((products) => {
+      req.user
+        .createOrder()
+        .then((order) => {
+          return order.addProduct(products.map((item) => {
+            item.orderItem = {
+              quantity: item.cartItem.quantity
+            }
+            return item;
+          }));
+        })
+        .catch(err => console.log(err));
+    })
+    .then(() => {
+      userCart.setProducts(null);  // Method of Associations in Sequenlize
+    })
+    .then(() => res.redirect('/orders'))
+    .catch(err => console.log(err));
+}
 
 exports.getOrders = (req, res, next) => {
-  res.render('shop/orders', {
-    path: '/orders',
-    pageTitle: 'Your Orders'
-  });
-};
-
-exports.getCheckout = (req, res, next) => {
-  res.render('shop/checkout', {
-    path: '/checkout',
-    pageTitle: 'Checkout'
-  });
+  req.user
+    .getOrders({ include: ['products'] }) // Sequenlize: Eager Loading
+    .then((orders) => {
+      res.render('shop/orders', {
+        path: '/orders',
+        pageTitle: 'Your Orders',
+        orders,
+      })
+    })
+    .catch(err => console.log(err));
 };
